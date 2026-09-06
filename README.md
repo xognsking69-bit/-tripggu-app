@@ -1,2 +1,7 @@
-# -tripggu-app
-    Trip꾸 - 여행경비 플래너 구매자용 앱
+# Trip꾸 구매자용 웹
+
+Cloudflare Pages 배포용 파일입니다.
+- index.html
+- styles.css
+- app.js
+- legal/

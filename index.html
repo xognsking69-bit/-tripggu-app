@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trip꾸 | 여행경비 플래너</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main class="wrap">
+  <section class="hero">
+    <div class="brand">Trip꾸</div>
+    <h1>여행경비 플래너</h1>
+    <p>일정 · 예산 · 지출 · 체크리스트 · 꾸미기를 한 곳에서.</p>
+  </section>
+
+  <section class="card">
+    <h2>구매자 인증</h2>
+    <p class="muted">크몽 구매 후 발급받은 이용코드를 입력해 주세요.</p>
+    <input id="code" placeholder="예: TRIP-AB12-CD34" autocomplete="one-time-code">
+    <button id="verify">이용코드 확인</button>
+    <p id="msg" class="msg"></p>
+    <p class="tiny">※ 현재 화면은 인증 서버 연결 전 미리보기입니다. 판매 전 서버 검증 방식으로 연결됩니다.</p>
+  </section>
+
+  <section class="grid">
+    <div class="mini"><b>📅 일정</b><span>달력 기반 관리</span></div>
+    <div class="mini"><b>💳 지출</b><span>예산·환율 자동 계산</span></div>
+    <div class="mini"><b>✅ 체크리스트</b><span>여행 준비 점검</span></div>
+    <div class="mini"><b>🎨 꾸미기</b><span>테마·사진·스티커</span></div>
+  </section>
+
+  <footer>
+    <a href="../legal/terms.html">이용약관</a>
+    <a href="../legal/privacy.html">개인정보 처리 안내</a>
+    <a href="../legal/refund.html">환불·청약철회</a>
+    <a href="../legal/license.html">저작권·이용범위</a>
+  </footer>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
