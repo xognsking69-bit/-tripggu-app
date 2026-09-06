@@ -437,12 +437,27 @@ $('backupFileInput').onchange = async (e) => {
   await loadBackupFile(file);
 };
 
-
-
 // Trip꾸 인증 해제
-document.getElementById("tripgguLogoutBtn")?.addEventListener("click", () => {
-  if(!confirm("이 기기에서 Trip꾸 인증을 해제할까요?")) return;
-  localStorage.removeItem("tripggu_verified");
-  localStorage.removeItem("tripggu_license_code");
-  location.href = "./index.html";
-});
+function setupTripgguLogout() {
+  const logoutBtn = document.getElementById("tripgguLogoutBtn");
+  if (!logoutBtn) return;
+
+  logoutBtn.addEventListener("click", () => {
+    const ok = confirm(
+      "이 기기에서 Trip꾸 인증을 해제할까요?\n\n다음 접속 시 구매 이용코드를 다시 입력해야 합니다."
+    );
+    if (!ok) return;
+
+    localStorage.removeItem("tripggu_verified");
+    localStorage.removeItem("tripggu_license_code");
+    localStorage.removeItem("tripggu_device_id");
+
+    window.location.replace("./index.html");
+  });
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", setupTripgguLogout);
+} else {
+  setupTripgguLogout();
+}

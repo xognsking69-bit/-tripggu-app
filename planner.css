@@ -144,3 +144,15 @@ body.font-serif { font-family: Georgia, "Noto Serif KR", serif; }
 @media (max-width:520px){
   .backup-actions{grid-template-columns:1fr}
 }
+
+
+/* Trip꾸 v3.1 - 이용권 관리 */
+.license-management-box{
+  margin-top:24px;
+  padding-top:22px;
+  border-top:1px dashed rgba(36,59,83,.22);
+}
+.license-management-box .danger{
+  min-height:46px;
+  margin-top:10px;
+}

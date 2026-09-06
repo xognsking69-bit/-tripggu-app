@@ -1,15 +1,12 @@
-Trip꾸 v3 인증 후 실제 플래너 연결
+Trip꾸 v3.1 인증 해제 수정
 
-GitHub -tripggu-app 저장소 최상단에 아래 4개 파일을 넣으세요.
-1. app.js        -> 기존 인증용 app.js 교체
-2. planner.html  -> 새 파일
-3. planner.css   -> 새 파일
-4. planner.js    -> 새 파일
+교체할 파일:
+- planner.html
+- planner.css
+- planner.js
 
-index.html / styles.css / 법적 고지 파일은 기존 것을 그대로 유지합니다.
-
-동작:
-- 정상 이용코드 인증 -> planner.html 이동
-- planner.html 직접 접근 -> 서버에서 코드 재검증
-- 차단/잘못된 코드 -> index.html로 복귀
-- 인증 해제 버튼 제공
+수정 내용:
+- 화면을 가리던 떠다니는 인증 해제 버튼 제거
+- 여행설정 맨 아래에 '이용권 관리' 전용 영역 추가
+- 인증 해제 버튼 클릭 이벤트 정상 작동하도록 수정
+- 인증 해제 시 저장된 이용코드/기기 식별정보 삭제 후 인증 화면으로 이동

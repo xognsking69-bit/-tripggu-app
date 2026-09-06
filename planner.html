@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>Trip꾸 여행경비 플래너</title>
   <link rel="manifest" href="manifest.webmanifest?v=230" />
-  <link rel="stylesheet" href="planner.css?v=230" />
+  <link rel="stylesheet" href="planner.css?v=310" />
 
 <script>
 (async function(){
@@ -238,6 +238,20 @@
           </div>
           <p class="hint compact">아이폰에서는 ‘백업 저장’을 누른 뒤 공유 시트에서 ‘파일에 저장’을 선택하면 가장 안전합니다.</p>
         </div>
+
+        <div class="license-management-box">
+          <div class="section-title-row">
+            <div>
+              <p class="muted">구매자 인증</p>
+              <h3>🔐 이용권 관리</h3>
+            </div>
+          </div>
+          <p class="hint">현재 기기에 저장된 Trip꾸 구매 인증을 관리합니다.</p>
+          <button id="tripgguLogoutBtn" class="ghost danger full" type="button">
+            이 기기 인증 해제
+          </button>
+          <p class="hint compact">인증을 해제하면 다음 접속 시 구매 이용코드를 다시 입력해야 합니다.</p>
+        </div>
       </div>
     </section>
   </main>
@@ -274,12 +288,6 @@
     </section>
 
   <div id="toast" class="toast" role="status"></div>
-  <script src="planner.js?v=230"></script>
-
-<button id="tripgguLogoutBtn" type="button"
-style="position:fixed;right:14px;bottom:76px;z-index:9999;border:0;border-radius:999px;padding:10px 14px;background:#17212b;color:white;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.16)">
-인증 해제
-</button>
-
+  <script src="planner.js?v=310"></script>
 </body>
 </html>
