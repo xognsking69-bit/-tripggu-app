@@ -1,0 +1,15 @@
+Trip꾸 v3 인증 후 실제 플래너 연결
+
+GitHub -tripggu-app 저장소 최상단에 아래 4개 파일을 넣으세요.
+1. app.js        -> 기존 인증용 app.js 교체
+2. planner.html  -> 새 파일
+3. planner.css   -> 새 파일
+4. planner.js    -> 새 파일
+
+index.html / styles.css / 법적 고지 파일은 기존 것을 그대로 유지합니다.
+
+동작:
+- 정상 이용코드 인증 -> planner.html 이동
+- planner.html 직접 접근 -> 서버에서 코드 재검증
+- 차단/잘못된 코드 -> index.html로 복귀
+- 인증 해제 버튼 제공
