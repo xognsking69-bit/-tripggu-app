@@ -442,17 +442,58 @@ function setupTripgguLogout() {
   const logoutBtn = document.getElementById("tripgguLogoutBtn");
   if (!logoutBtn) return;
 
-  logoutBtn.addEventListener("click", () => {
+  logoutBtn.addEventListener("click", async () => {
     const ok = confirm(
-      "이 기기에서 Trip꾸 인증을 해제할까요?\n\n다음 접속 시 구매 이용코드를 다시 입력해야 합니다."
+      "이 기기에서 Trip꾸 인증을 해제할까요?\n\n서버에 등록된 이 기기 정보도 함께 해제됩니다."
     );
     if (!ok) return;
 
-    localStorage.removeItem("tripggu_verified");
-    localStorage.removeItem("tripggu_license_code");
-    localStorage.removeItem("tripggu_device_id");
+    const code = localStorage.getItem("tripggu_license_code");
+    const deviceId = localStorage.getItem("tripggu_device_id");
+    const originalText = logoutBtn.textContent;
 
-    window.location.replace("./index.html");
+    logoutBtn.disabled = true;
+    logoutBtn.textContent = "인증 해제 중...";
+
+    try {
+      // 로컬 정보가 이미 없으면 인증 화면으로 안전하게 복귀
+      if (!code || !deviceId) {
+        localStorage.removeItem("tripggu_verified");
+        localStorage.removeItem("tripggu_license_code");
+        localStorage.removeItem("tripggu_device_id");
+        window.location.replace("./index.html");
+        return;
+      }
+
+      const response = await fetch(
+        "https://tripggu-auth.xognsking69.workers.dev/deactivate",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code, deviceId })
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.message || "SERVER_DEACTIVATE_FAILED");
+      }
+
+      // 서버 D1에서 해제가 확인된 뒤에만 로컬 인증정보 삭제
+      localStorage.removeItem("tripggu_verified");
+      localStorage.removeItem("tripggu_license_code");
+      localStorage.removeItem("tripggu_device_id");
+
+      window.location.replace("./index.html");
+    } catch (error) {
+      console.error(error);
+      alert(
+        "서버에서 기기 인증을 해제하지 못했습니다.\n인터넷 연결을 확인한 뒤 다시 시도해 주세요."
+      );
+      logoutBtn.disabled = false;
+      logoutBtn.textContent = originalText;
+    }
   });
 }
 
