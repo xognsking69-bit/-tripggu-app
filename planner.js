@@ -22,7 +22,8 @@ function defaultState(){
   const t=todayISO();
   return {
     settings:{ tripName:'나의 여행', destination:'', startDate:t, endDate:plusDays(t,3), people:2, budget:1000000, currencyCode:'JPY', krwPerUnit:9.35 },
-    expenses:[], checklist:defaultChecklist, selectedDate:t,
+    expenses:[], checklist:defaultChecklist, schedules:[], selectedDate:t,
+    calendarStyle:{tripBandVisible:true,tripBandColor:'sky',tripBandStyle:'soft',tripBandIcon:'✈️'},
   };
 }
 function loadState(){
@@ -39,7 +40,9 @@ function loadState(){
         return migrated;
       })(),
       expenses:Array.isArray(raw.expenses)?raw.expenses:[],
-      checklist:Array.isArray(raw.checklist)&&raw.checklist.length?raw.checklist:base.checklist
+      schedules:Array.isArray(raw.schedules)?raw.schedules:[],
+      checklist:Array.isArray(raw.checklist)&&raw.checklist.length?raw.checklist:base.checklist,
+      calendarStyle:{...base.calendarStyle,...(raw.calendarStyle||{})}
     };
   } catch { return defaultState(); }
 }
@@ -77,6 +80,33 @@ function renderHeader(){
   $('budgetUsage').textContent=budget>0?`예산의 ${pct.toFixed(1)}% 사용 · 1인당 ${won(spent/Math.max(1,Number(state.settings.people)||1))}`:'총 예산을 설정해 주세요.';
 }
 
+const scheduleIcons = {flight:'✈️',hotel:'🏨',transport:'🚆',activity:'🎟',food:'🍽',shopping:'🛍',plan:'📍'};
+function scheduleIcon(type){ return scheduleIcons[type] || '📍'; }
+function eventsForDate(iso){
+  const events=[];
+  const cs=state.calendarStyle||{};
+  if(cs.tripBandVisible!==false && inTrip(iso)){
+    events.push({
+      id:'__trip__', title:state.settings.tripName||'나의 여행',
+      startDate:state.settings.startDate, endDate:state.settings.endDate,
+      color:cs.tripBandColor||'sky', style:cs.tripBandStyle||'soft', icon:cs.tripBandIcon||'✈️', isTrip:true
+    });
+  }
+  (state.schedules||[]).forEach(e=>{ if(iso>=e.startDate && iso<=e.endDate) events.push({...e,icon:scheduleIcon(e.type)}); });
+  return events;
+}
+function isMonday(iso){ return new Date(iso+'T12:00:00').getDay()===1; }
+function isSunday(iso){ return new Date(iso+'T12:00:00').getDay()===0; }
+function eventSegmentHtml(e,iso){
+  const start = iso===e.startDate || isMonday(iso);
+  const end = iso===e.endDate || isSunday(iso);
+  const cls=['calendar-event',`event-${e.color||'sky'}`,`style-${e.style||'soft'}`];
+  if(start) cls.push('segment-start');
+  if(end) cls.push('segment-end');
+  const label=start ? `<span class="event-label">${escapeHtml(e.icon||'')} ${escapeHtml(e.title||'일정')}</span>` : '<span class="event-label continuation">&nbsp;</span>';
+  return `<div class="${cls.join(' ')}" data-event-id="${escapeHtml(e.id)}" title="${escapeHtml(e.title||'일정')}">${label}</div>`;
+}
+
 function renderCalendar(){
   const y=viewDate.getFullYear(), m=viewDate.getMonth();
   $('monthLabel').textContent=`${y}년 ${m+1}월`;
@@ -86,20 +116,70 @@ function renderCalendar(){
   const grid=$('calendarGrid'); grid.innerHTML='';
   for(let i=0;i<42;i++){
     const d=new Date(start); d.setDate(start.getDate()+i); const iso=dateOnly(d);
-    const btn=document.createElement('button'); btn.type='button'; btn.className='day-cell';
-    if(d.getMonth()!==m) btn.classList.add('outside');
-    if(!inTrip(iso)) btn.classList.add('outtrip');
-    if(iso===state.selectedDate) btn.classList.add('selected');
-    if(iso===today) btn.classList.add('today');
+    const cell=document.createElement('div'); cell.className='day-cell'; cell.setAttribute('role','button'); cell.tabIndex=0;
+    if(d.getMonth()!==m) cell.classList.add('outside');
+    if(!inTrip(iso)) cell.classList.add('outtrip');
+    if(iso===state.selectedDate) cell.classList.add('selected');
+    if(iso===today) cell.classList.add('today');
     const total=dayTotal(iso);
-    btn.innerHTML=`<span class="day-num">${d.getDate()}</span>${total>0?`<span class="day-total">${won(total)}</span>`:''}`;
-    btn.addEventListener('click',()=>{ state.selectedDate=iso; saveState(); renderCalendar(); renderSelectedDate(); });
-    grid.appendChild(btn);
+    const events=eventsForDate(iso).slice(0,3);
+    const eventHtml=events.map(e=>eventSegmentHtml(e,iso)).join('');
+    const more=Math.max(0,eventsForDate(iso).length-3);
+    cell.innerHTML=`<div class="day-top"><span class="day-num">${d.getDate()}</span>${total>0?`<span class="day-total">${won(total)}</span>`:''}</div><div class="calendar-events">${eventHtml}${more?`<div class="event-more">+${more}</div>`:''}</div>`;
+    const selectDay=()=>{ state.selectedDate=iso; saveState(); renderCalendar(); renderSelectedDate(); };
+    cell.addEventListener('click',(ev)=>{
+      const eventEl=ev.target.closest('.calendar-event');
+      if(eventEl && eventEl.dataset.eventId && eventEl.dataset.eventId!=='__trip__'){
+        ev.stopPropagation(); editSchedule(eventEl.dataset.eventId); return;
+      }
+      selectDay();
+    });
+    cell.addEventListener('keydown',(ev)=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();selectDay();}});
+    grid.appendChild(cell);
   }
 }
 function renderSelectedDate(){
   $('selectedDateLabel').textContent=formatDate(state.selectedDate);
   $('selectedDayTotal').textContent=won(dayTotal(state.selectedDate));
+}
+
+function renderSchedules(){
+  const list=$('scheduleList'); if(!list) return;
+  const data=[...(state.schedules||[])].sort((a,b)=>a.startDate.localeCompare(b.startDate)||a.createdAt-b.createdAt);
+  $('itineraryCount').textContent=`${data.length}개`;
+  if(!data.length){ list.innerHTML='<div class="empty">아직 등록한 일정이 없습니다.<br>항공·숙소·예약 일정을 추가해 보세요.</div>'; return; }
+  list.innerHTML=data.map(e=>`
+    <div class="schedule-item schedule-${escapeHtml(e.color||'sky')}">
+      <div class="schedule-item-main">
+        <div class="schedule-item-title"><span>${scheduleIcon(e.type)}</span> ${escapeHtml(e.title)}</div>
+        <div class="schedule-item-date">${formatDate(e.startDate)}${e.endDate!==e.startDate?` → ${formatDate(e.endDate)}`:''}</div>
+        ${e.memo?`<div class="schedule-item-memo">${escapeHtml(e.memo)}</div>`:''}
+      </div>
+      <div class="record-actions"><button class="mini-btn edit" type="button" data-schedule-edit="${e.id}">수정</button><button class="mini-btn delete" type="button" data-schedule-delete="${e.id}">삭제</button></div>
+    </div>`).join('');
+  list.querySelectorAll('[data-schedule-edit]').forEach(b=>b.onclick=()=>editSchedule(b.dataset.scheduleEdit));
+  list.querySelectorAll('[data-schedule-delete]').forEach(b=>b.onclick=()=>deleteSchedule(b.dataset.scheduleDelete));
+}
+function fillScheduleDefaults(){
+  if(!$('scheduleStart')) return;
+  if(!$('scheduleEditingId').value){ $('scheduleStart').value=state.selectedDate||state.settings.startDate; $('scheduleEnd').value=state.selectedDate||state.settings.startDate; }
+  const cs=state.calendarStyle||{};
+  $('tripBandVisible').value=cs.tripBandVisible===false?'no':'yes';
+  $('tripBandColor').value=cs.tripBandColor||'sky'; $('tripBandStyle').value=cs.tripBandStyle||'soft'; $('tripBandIcon').value=cs.tripBandIcon||'✈️';
+}
+function clearScheduleForm(){
+  $('scheduleForm').reset(); $('scheduleEditingId').value=''; $('scheduleSubmitBtn').textContent='일정 저장'; $('scheduleCancelEdit').classList.add('hidden'); fillScheduleDefaults();
+}
+function editSchedule(id){
+  const e=(state.schedules||[]).find(x=>x.id===id); if(!e)return;
+  activateTab('itinerary');
+  $('scheduleEditingId').value=e.id; $('scheduleType').value=e.type||'plan'; $('scheduleTitle').value=e.title||''; $('scheduleStart').value=e.startDate; $('scheduleEnd').value=e.endDate; $('scheduleColor').value=e.color||'sky'; $('scheduleStyle').value=e.style||'soft'; $('scheduleMemo').value=e.memo||'';
+  $('scheduleSubmitBtn').textContent='수정 저장'; $('scheduleCancelEdit').classList.remove('hidden'); window.scrollTo({top:0,behavior:'smooth'});
+}
+function deleteSchedule(id){
+  const e=(state.schedules||[]).find(x=>x.id===id); if(!e)return;
+  if(!confirm(`“${e.title}” 일정을 삭제할까요?`))return;
+  state.schedules=state.schedules.filter(x=>x.id!==id); saveState(); renderAll(); toast('일정을 삭제했습니다.');
 }
 
 function renderRecords(){
@@ -155,7 +235,7 @@ function fillSettings(){
   $('tripName').value=s.tripName||''; $('destination').value=s.destination||''; $('startDate').value=s.startDate||''; $('endDate').value=s.endDate||'';
   $('people').value=s.people||1; $('budget').value=s.budget||0; $('currencyCode').value=s.currencyCode||'JPY'; $('krwPerUnit').value=s.krwPerUnit||9.35; updateRateLabel();
 }
-function renderAll(){ renderHeader(); renderCalendar(); renderSelectedDate(); renderRecords(); renderChecklist(); fillSettings(); }
+function renderAll(){ renderHeader(); renderCalendar(); renderSelectedDate(); renderSchedules(); renderRecords(); renderChecklist(); fillSettings(); fillScheduleDefaults(); }
 
 $('expenseForm').addEventListener('submit',(ev)=>{
   ev.preventDefault();
@@ -194,6 +274,23 @@ function deleteExpense(id){
 }
 $('cancelEditBtn').onclick=()=>{clearExpenseForm();toast('수정을 취소했습니다.');};
 
+$('scheduleForm').addEventListener('submit',(ev)=>{
+  ev.preventDefault();
+  const start=$('scheduleStart').value, end=$('scheduleEnd').value;
+  if(!start||!end){toast('일정 날짜를 입력해 주세요.');return;}
+  if(end<start){toast('종료일은 시작일 이후여야 합니다.');return;}
+  const id=$('scheduleEditingId').value;
+  const data={type:$('scheduleType').value,title:$('scheduleTitle').value.trim()||'여행 일정',startDate:start,endDate:end,color:$('scheduleColor').value,style:$('scheduleStyle').value,memo:$('scheduleMemo').value.trim()};
+  if(id){const idx=state.schedules.findIndex(x=>x.id===id); if(idx>=0) state.schedules[idx]={...state.schedules[idx],...data,updatedAt:Date.now()}; toast('일정을 수정했습니다.');}
+  else {state.schedules.push({id:crypto.randomUUID?crypto.randomUUID():`s${Date.now()}${Math.random()}`,...data,createdAt:Date.now()}); toast('일정을 저장했습니다.');}
+  saveState(); clearScheduleForm(); renderAll();
+});
+$('scheduleCancelEdit').onclick=()=>{clearScheduleForm();toast('수정을 취소했습니다.');};
+$('saveTripBandBtn').onclick=()=>{
+  state.calendarStyle={...(state.calendarStyle||{}),tripBandVisible:$('tripBandVisible').value==='yes',tripBandColor:$('tripBandColor').value,tripBandStyle:$('tripBandStyle').value,tripBandIcon:$('tripBandIcon').value};
+  saveState(); renderCalendar(); toast('여행 기간 띠를 저장했습니다.');
+};
+
 $('settingsForm').addEventListener('submit',(ev)=>{
   ev.preventDefault();
   const start=$('startDate').value, end=$('endDate').value;
@@ -212,7 +309,7 @@ $('recordCategoryFilter').onchange=renderRecords; $('recordSort').onchange=rende
 function activateTab(id){
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id===id));
-  if(id==='records')renderRecords(); if(id==='settings')fillSettings();
+  if(id==='records')renderRecords(); if(id==='itinerary'){renderSchedules();fillScheduleDefaults();} if(id==='settings')fillSettings();
 }
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>activateTab(b.dataset.tab)));
 
@@ -224,7 +321,7 @@ $('exportBtn').onclick=()=>{
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`여행경비_${state.settings.tripName||'여행'}.csv`; a.click(); URL.revokeObjectURL(url); toast('CSV 파일을 만들었습니다.');
 };
 $('resetBtn').onclick=()=>{
-  if(!confirm('여행 설정, 지출 기록, 체크리스트를 모두 초기화할까요?'))return;
+  if(!confirm('여행 설정, 여행 일정, 지출 기록, 체크리스트를 모두 초기화할까요?'))return;
   state=defaultState(); viewDate=new Date(state.settings.startDate+'T12:00:00'); saveState(); clearExpenseForm(); renderAll(); activateTab('calendar'); toast('초기화했습니다.');
 };
 
@@ -345,7 +442,7 @@ function buildBackupPayload(){
   return {
     app: 'travel-budget-planner',
     backupVersion: 1,
-    appVersion: '2.3',
+    appVersion: '3.3',
     exportedAt: new Date().toISOString(),
     state
   };
@@ -368,7 +465,9 @@ function normalizeImportedState(raw){
     ...payload,
     settings,
     expenses: Array.isArray(payload.expenses) ? payload.expenses : [],
+    schedules: Array.isArray(payload.schedules) ? payload.schedules : [],
     checklist: Array.isArray(payload.checklist) && payload.checklist.length ? payload.checklist : base.checklist,
+    calendarStyle: {...base.calendarStyle, ...(payload.calendarStyle && typeof payload.calendarStyle === 'object' ? payload.calendarStyle : {})},
     selectedDate: typeof payload.selectedDate === 'string' ? payload.selectedDate : settings.startDate,
   };
 

@@ -156,3 +156,31 @@ body.font-serif { font-family: Georgia, "Noto Serif KR", serif; }
   min-height:46px;
   margin-top:10px;
 }
+
+
+/* Trip꾸 v3.3 - 예약형 여행 일정 달력 */
+.tabs{grid-template-columns:repeat(5,1fr)}
+.calendar-card{overflow:visible}
+.calendar-grid{gap:6px;overflow:visible}
+.day-cell{min-height:104px;overflow:visible;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.day-top{display:flex;align-items:flex-start;justify-content:space-between;gap:3px;min-height:23px}
+.day-total{margin-top:2px;text-align:right;font-size:9px;max-width:64px}
+.calendar-events{display:flex;flex-direction:column;gap:3px;margin-top:2px;position:relative;z-index:2}
+.calendar-event{height:20px;display:flex;align-items:center;min-width:0;margin-left:-1px;margin-right:-1px;padding:0 5px;border-radius:4px;font-size:9px;font-weight:900;line-height:1;white-space:nowrap;overflow:hidden;position:relative;z-index:3;box-shadow:0 1px 3px rgba(23,50,77,.07)}
+.calendar-event:not(.segment-start){margin-left:-7px;padding-left:7px;border-top-left-radius:0;border-bottom-left-radius:0}
+.calendar-event:not(.segment-end){margin-right:-7px;padding-right:7px;border-top-right-radius:0;border-bottom-right-radius:0}
+.calendar-event.segment-start{border-top-left-radius:8px;border-bottom-left-radius:8px}
+.calendar-event.segment-end{border-top-right-radius:8px;border-bottom-right-radius:8px}
+.event-label{overflow:hidden;text-overflow:ellipsis;display:block;max-width:100%}.event-label.continuation{opacity:0}
+.event-more{font-size:9px;color:var(--muted);font-weight:900;padding-left:4px}
+.event-sky{--ev:#7fc5e8;--ev-bg:#dff3ff;--ev-ink:#164968}.event-mint{--ev:#68c7a2;--ev-bg:#dcf7ec;--ev-ink:#135d47}.event-peach{--ev:#f18d80;--ev-bg:#ffe7e2;--ev-ink:#7a3028}.event-lavender{--ev:#a895e6;--ev-bg:#eee9ff;--ev-ink:#4f3a8c}.event-navy{--ev:#294c6d;--ev-bg:#dce8f2;--ev-ink:#fff}.event-yellow{--ev:#e6b844;--ev-bg:#fff2bd;--ev-ink:#6c5210}
+.calendar-event.style-soft{background:var(--ev-bg);color:var(--ev-ink);border:1px solid color-mix(in srgb,var(--ev) 50%,white)}
+.calendar-event.style-solid{background:var(--ev);color:var(--ev-ink);border:1px solid var(--ev)}
+.calendar-event.event-navy.style-solid{color:white}
+.calendar-event.style-outline{background:white;color:var(--ev-ink);border:1.5px dashed var(--ev)}
+.itinerary-count{font-size:12px;font-weight:900;background:var(--sky);color:var(--navy);border-radius:999px;padding:7px 10px}
+.schedule-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.schedule-item{border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:15px;padding:12px;background:#fff;display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.schedule-sky{border-left-color:#7fc5e8}.schedule-mint{border-left-color:#68c7a2}.schedule-peach{border-left-color:#f18d80}.schedule-lavender{border-left-color:#a895e6}.schedule-navy{border-left-color:#294c6d}.schedule-yellow{border-left-color:#e6b844}
+.schedule-item-main{min-width:0}.schedule-item-title{font-weight:900;font-size:14px}.schedule-item-date,.schedule-item-memo{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45}.trip-band-card{background:linear-gradient(160deg,#fff,#f8fbfd)}
+@media(max-width:540px){.tabs{grid-template-columns:repeat(5,1fr)}.tab{font-size:10px;padding:9px 2px}.day-cell{min-height:92px;padding:5px 3px}.calendar-grid,.weekdays{gap:4px}.calendar-event{height:18px;font-size:8px;padding-left:3px;padding-right:3px}.calendar-event:not(.segment-start){margin-left:-5px}.calendar-event:not(.segment-end){margin-right:-5px}.day-total{font-size:8px}.schedule-item{display:block}.schedule-item .record-actions{margin-top:9px}}
