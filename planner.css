@@ -184,3 +184,155 @@ body.font-serif { font-family: Georgia, "Noto Serif KR", serif; }
 .schedule-sky{border-left-color:#7fc5e8}.schedule-mint{border-left-color:#68c7a2}.schedule-peach{border-left-color:#f18d80}.schedule-lavender{border-left-color:#a895e6}.schedule-navy{border-left-color:#294c6d}.schedule-yellow{border-left-color:#e6b844}
 .schedule-item-main{min-width:0}.schedule-item-title{font-weight:900;font-size:14px}.schedule-item-date,.schedule-item-memo{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45}.trip-band-card{background:linear-gradient(160deg,#fff,#f8fbfd)}
 @media(max-width:540px){.tabs{grid-template-columns:repeat(5,1fr)}.tab{font-size:10px;padding:9px 2px}.day-cell{min-height:92px;padding:5px 3px}.calendar-grid,.weekdays{gap:4px}.calendar-event{height:18px;font-size:8px;padding-left:3px;padding-right:3px}.calendar-event:not(.segment-start){margin-left:-5px}.calendar-event:not(.segment-end){margin-right:-5px}.day-total{font-size:8px}.schedule-item{display:block}.schedule-item .record-actions{margin-top:9px}}
+
+
+/* =========================================================
+   Trip꾸 v3.3.1 - 모바일 달력 폭 고정 / 오른쪽 잘림 수정
+   ========================================================= */
+.calendar-card{
+  overflow:hidden !important;
+  min-width:0;
+  width:100%;
+}
+.weekdays,
+.calendar-grid{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr)) !important;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  overflow:hidden !important;
+}
+.weekdays > *,
+.calendar-grid > *{
+  min-width:0;
+  max-width:100%;
+}
+.day-cell{
+  min-width:0 !important;
+  width:auto !important;
+  max-width:100%;
+  overflow:hidden !important;
+}
+.day-top{
+  min-width:0;
+  width:100%;
+}
+.day-num{
+  flex:0 0 auto;
+}
+.day-total{
+  flex:1 1 auto;
+  min-width:0;
+  max-width:100% !important;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  word-break:normal;
+}
+.calendar-events{
+  min-width:0;
+  width:100%;
+  overflow:visible;
+}
+/* 이어지는 예약 띠는 셀 경계까지만 살짝 연결 */
+.calendar-event{
+  max-width:calc(100% + 2px);
+  min-width:0;
+}
+.calendar-event:not(.segment-start){
+  margin-left:-4px !important;
+  padding-left:4px !important;
+}
+.calendar-event:not(.segment-end){
+  margin-right:-4px !important;
+  padding-right:4px !important;
+}
+.event-label{
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+/* 휴대폰 */
+@media(max-width:560px){
+  .container{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
+    padding-left:8px;
+    padding-right:8px;
+  }
+  .calendar-card{
+    padding-left:9px;
+    padding-right:9px;
+  }
+  .calendar-grid,
+  .weekdays{
+    gap:3px !important;
+  }
+  .day-cell{
+    min-height:88px !important;
+    padding:5px 2px !important;
+    border-radius:10px;
+  }
+  .day-cell.selected{
+    padding:4px 1px !important;
+  }
+  .day-top{
+    gap:1px;
+    align-items:flex-start;
+  }
+  .day-num{
+    min-width:19px;
+    width:19px;
+    height:19px;
+    font-size:10px;
+    border-radius:7px;
+  }
+  .day-total{
+    margin-top:2px;
+    font-size:7.5px !important;
+    letter-spacing:-.04em;
+    text-align:right;
+  }
+  .calendar-event{
+    height:17px !important;
+    font-size:7.5px !important;
+    padding-left:2px !important;
+    padding-right:2px !important;
+  }
+  .calendar-event:not(.segment-start){
+    margin-left:-3px !important;
+    padding-left:3px !important;
+  }
+  .calendar-event:not(.segment-end){
+    margin-right:-3px !important;
+    padding-right:3px !important;
+  }
+}
+
+/* 휴대폰 가로모드 */
+@media(max-height:560px) and (orientation:landscape){
+  .container{
+    width:100%;
+    max-width:100%;
+    padding-left:8px;
+    padding-right:8px;
+    overflow-x:hidden;
+  }
+  .calendar-grid,
+  .weekdays{
+    grid-template-columns:repeat(7,minmax(0,1fr)) !important;
+    gap:4px !important;
+  }
+  .day-cell{
+    min-height:72px !important;
+    padding:4px 3px !important;
+  }
+  .day-total{
+    font-size:8px !important;
+  }
+}
