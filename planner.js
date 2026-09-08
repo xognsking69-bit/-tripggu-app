@@ -22,7 +22,7 @@ function defaultState(){
   const t=todayISO();
   return {
     settings:{ tripName:'나의 여행', destination:'', startDate:t, endDate:plusDays(t,3), people:2, budget:1000000, currencyCode:'JPY', krwPerUnit:9.35 },
-    expenses:[], checklist:defaultChecklist, schedules:[], selectedDate:t,
+    expenses:[], checklist:defaultChecklist, schedules:[], photos:[], selectedDate:t,
     calendarStyle:{tripBandVisible:true,tripBandColor:'sky',tripBandStyle:'soft',tripBandIcon:'✈️'},
   };
 }
@@ -41,6 +41,7 @@ function loadState(){
       })(),
       expenses:Array.isArray(raw.expenses)?raw.expenses:[],
       schedules:Array.isArray(raw.schedules)?raw.schedules:[],
+      photos:Array.isArray(raw.photos)?raw.photos:[],
       checklist:Array.isArray(raw.checklist)&&raw.checklist.length?raw.checklist:base.checklist,
       calendarStyle:{...base.calendarStyle,...(raw.calendarStyle||{})}
     };
@@ -135,8 +136,9 @@ function renderCalendar(){
     const total=dayTotal(iso);
     const events=eventsForDate(iso).slice(0,3);
     const eventHtml=events.map(e=>eventSegmentHtml(e,iso)).join('');
+    const photoCount=(state.photos||[]).filter(p=>p.date===iso).length;
     const more=Math.max(0,eventsForDate(iso).length-3);
-    cell.innerHTML=`<div class="day-top"><span class="day-num">${d.getDate()}</span>${total>0?`<span class="day-total" title="${won(total)}">${calendarWon(total)}</span>`:''}</div><div class="calendar-events">${eventHtml}${more?`<div class="event-more">+${more}</div>`:''}</div>`;
+    cell.innerHTML=`<div class="day-top"><span class="day-num">${d.getDate()}</span>${total>0?`<span class="day-total" title="${won(total)}">${calendarWon(total)}</span>`:''}${photoCount?`<span class="day-photo-badge" title="사진 ${photoCount}장">📷${photoCount}</span>`:''}</div><div class="calendar-events">${eventHtml}${more?`<div class="event-more">+${more}</div>`:''}</div>`;
     const selectDay=()=>{ state.selectedDate=iso; saveState(); renderCalendar(); renderSelectedDate(); };
     cell.addEventListener('click',(ev)=>{
       const eventEl=ev.target.closest('.calendar-event');
@@ -320,7 +322,7 @@ $('recordCategoryFilter').onchange=renderRecords; $('recordSort').onchange=rende
 function activateTab(id){
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
   document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id===id));
-  if(id==='records')renderRecords(); if(id==='itinerary'){renderSchedules();fillScheduleDefaults();} if(id==='settings')fillSettings();
+  if(id==='records')renderRecords(); if(id==='itinerary'){renderSchedules();fillScheduleDefaults();} if(id==='photos')renderPhotoAlbum(); if(id==='settings')fillSettings();
 }
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>activateTab(b.dataset.tab)));
 
@@ -477,6 +479,7 @@ function normalizeImportedState(raw){
     settings,
     expenses: Array.isArray(payload.expenses) ? payload.expenses : [],
     schedules: Array.isArray(payload.schedules) ? payload.schedules : [],
+    photos: Array.isArray(payload.photos) ? payload.photos : [],
     checklist: Array.isArray(payload.checklist) && payload.checklist.length ? payload.checklist : base.checklist,
     calendarStyle: {...base.calendarStyle, ...(payload.calendarStyle && typeof payload.calendarStyle === 'object' ? payload.calendarStyle : {})},
     selectedDate: typeof payload.selectedDate === 'string' ? payload.selectedDate : settings.startDate,
@@ -612,3 +615,65 @@ if (document.readyState === "loading") {
 } else {
   setupTripgguLogout();
 }
+
+
+// ===== v3.4 날짜별 여행 사진 앨범 =====
+if(!Array.isArray(state.photos)) state.photos=[];
+
+function photoItemsForDate(iso){
+  return (state.photos||[]).filter(p=>p.date===iso).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+}
+function allPhotoCount(){ return (state.photos||[]).length; }
+function resizeAlbumPhoto(file, maxSide=900, quality=.72){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onerror=reject;
+    reader.onload=()=>{
+      const img=new Image();
+      img.onerror=reject;
+      img.onload=()=>{
+        let w=img.naturalWidth,h=img.naturalHeight;
+        const scale=Math.min(1,maxSide/Math.max(w,h)); w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+        const c=document.createElement('canvas'); c.width=w;c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(c.toDataURL('image/jpeg',quality));
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function renderPhotoAlbum(){
+  const grid=$('photoAlbumGrid'); if(!grid)return;
+  const iso=state.selectedDate||state.settings.startDate;
+  $('photoSelectedDate').textContent=formatDate(iso); $('photoCount').textContent=`${allPhotoCount()}장`;
+  const items=photoItemsForDate(iso);
+  if(!items.length){grid.innerHTML='<div class="photo-empty">📷<b>이 날짜에 저장된 사진이 없어요.</b><span>위의 사진 추가하기를 눌러 여행의 순간을 남겨보세요.</span></div>';return;}
+  grid.innerHTML=items.map(p=>`<article class="photo-item"><button class="photo-open" type="button" data-photo-open="${p.id}"><img src="${p.data}" alt="여행 사진"></button><div class="photo-caption"><input data-photo-memo="${p.id}" value="${escapeHtml(p.memo||'')}" placeholder="짧은 메모 남기기"><button class="photo-delete" type="button" data-photo-delete="${p.id}" aria-label="사진 삭제">삭제</button></div></article>`).join('');
+  grid.querySelectorAll('[data-photo-delete]').forEach(b=>b.onclick=()=>deleteTripPhoto(b.dataset.photoDelete));
+  grid.querySelectorAll('[data-photo-memo]').forEach(i=>i.onchange=()=>{const p=state.photos.find(x=>x.id===i.dataset.photoMemo);if(p){p.memo=i.value.trim();saveState();toast('사진 메모를 저장했습니다.');}});
+  grid.querySelectorAll('[data-photo-open]').forEach(b=>b.onclick=()=>openTripPhoto(b.dataset.photoOpen));
+}
+async function addTripPhotos(files){
+  const list=[...(files||[])].filter(f=>f.type.startsWith('image/')); if(!list.length)return;
+  if(allPhotoCount()+list.length>30){alert('사진은 최대 30장까지 저장할 수 있어요. 기존 사진을 삭제한 뒤 다시 추가해 주세요.');return;}
+  toast('사진을 저장하고 있어요...');
+  try{
+    for(const file of list){
+      const data=await resizeAlbumPhoto(file);
+      state.photos.push({id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),date:state.selectedDate||state.settings.startDate,data,memo:'',createdAt:Date.now()});
+    }
+    saveState();renderPhotoAlbum();renderCalendar();toast(`${list.length}장의 사진을 추가했습니다.`);
+  }catch(e){console.error(e);alert('사진을 저장하지 못했습니다. 사진 수를 줄이거나 더 작은 사진으로 다시 시도해 주세요.');}
+}
+function deleteTripPhoto(id){
+  if(!confirm('이 사진을 삭제할까요?'))return; state.photos=state.photos.filter(p=>p.id!==id);saveState();renderPhotoAlbum();renderCalendar();toast('사진을 삭제했습니다.');
+}
+function openTripPhoto(id){
+  const p=state.photos.find(x=>x.id===id);if(!p)return;
+  const w=window.open('','_blank');if(!w)return; w.document.write(`<meta name="viewport" content="width=device-width,initial-scale=1"><title>Trip꾸 사진</title><body style="margin:0;background:#111;display:grid;place-items:center;min-height:100vh"><img src="${p.data}" style="max-width:100%;max-height:100vh;object-fit:contain"></body>`);
+}
+const photoInput=$('tripPhotoInput'); if(photoInput) photoInput.onchange=async e=>{await addTripPhotos(e.target.files);e.target.value='';};
+
+const _renderAllPhotos=renderAll;
+renderAll=function(){_renderAllPhotos();renderPhotoAlbum();};

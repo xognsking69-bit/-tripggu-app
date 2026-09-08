@@ -84,6 +84,7 @@
     <nav class="tabs" aria-label="앱 메뉴">
       <button class="tab active" data-tab="calendar">달력</button>
       <button class="tab" data-tab="itinerary">여행일정</button>
+      <button class="tab" data-tab="photos">사진앨범</button>
       <button class="tab" data-tab="records">지출기록</button>
       <button class="tab" data-tab="checklist">체크리스트</button>
       <button class="tab" data-tab="settings">여행설정</button>
@@ -145,6 +146,23 @@
           </div>
         </form>
         <p class="hint">저장하면 입력 내용은 지출기록으로 이동하고, 달력에는 해당 날짜의 총 지출만 표시됩니다.</p>
+      </div>
+    </section>
+
+    <section id="photos" class="tab-panel">
+      <div class="card photo-album-card">
+        <div class="section-title-row">
+          <div><p class="muted">TRAVEL PHOTO ALBUM</p><h3>📸 날짜별 여행 사진</h3></div>
+          <span class="pill" id="photoCount">0장</span>
+        </div>
+        <p class="hint">달력에서 날짜를 선택한 뒤 사진을 추가하면 그 날짜의 추억으로 저장됩니다. 사진과 함께 짧은 메모도 남길 수 있어요.</p>
+        <div class="photo-date-box"><span>선택 날짜</span><strong id="photoSelectedDate"></strong></div>
+        <label class="photo-upload-box">
+          <input id="tripPhotoInput" type="file" accept="image/*" multiple />
+          <span class="photo-upload-icon">＋</span><b>사진 추가하기</b><small>사진 앱에서 여러 장 선택 가능</small>
+        </label>
+        <div id="photoAlbumGrid" class="photo-album-grid"></div>
+        <p class="hint photo-storage-hint">사진은 이 브라우저에 저장되고 백업 파일에도 함께 포함됩니다. 용량을 줄이기 위해 자동으로 최적화됩니다.</p>
       </div>
     </section>
 
@@ -382,6 +400,6 @@
     </section>
 
   <div id="toast" class="toast" role="status"></div>
-  <script src="planner.js?v=330"></script>
+  <script src="planner.js?v=340"></script>
 </body>
 </html>
